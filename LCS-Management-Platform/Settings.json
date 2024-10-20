@@ -1,0 +1,10 @@
+{
+  "Project": "",
+  "LCSAPI": "https://lcsapi.lcs.dynamics.com",
+  "EnvironmentIds": [],
+  "APICooldown": 60000,
+  "AdminUser": "",
+  "ClientId": "",
+  "AzureTenant": "",
+  "LCSScope": "https://lcsapi.lcs.dynamics.com//.default"
+}

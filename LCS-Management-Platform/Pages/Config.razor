@@ -1,0 +1,109 @@
+﻿@page "/config"
+@using Data
+@using Services
+@inject SettingsService SettingsService
+
+<MudPaper Class="pa-4 ma-8" Elevation="0">
+    <MudTabs Elevation="5" Centered="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="LCS settings" Icon="@Icons.Material.Filled.SettingsApplications">
+            <MudPaper Class="pa-4 mt-2 ml-8 mr-8 mb-4" Elevation="0">
+                <MudContainer>
+                    <MudCard>
+                        <MudCardContent>
+@*                             <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">Settings for specific LCS instance</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader> *@
+                            <MudGrid>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField @bind-Value="SettingsService.Settings.Project" Label="LCS project" Variant="Variant.Outlined"></MudTextField>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField @bind-Value="SettingsService.Settings.LCSAPI" Label="API" Variant="Variant.Outlined"></MudTextField>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField @bind-Value="SettingsService.Settings.AdminUser" Label="Admin user" Variant="Variant.Outlined"></MudTextField>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField @bind-Value="SettingsService.Settings.LCSScope" Label="LCS scope" Variant="Variant.Outlined"></MudTextField>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                </MudContainer>
+            </MudPaper>
+            <MudPaper Class="pa-2 mt-4" Elevation="0">
+                <MudContainer>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveChanges" IconColor="Color.Secondary" Size="Size.Large">Save</MudButton>
+                </MudContainer>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Environment settings" Icon="@Icons.Material.Filled.AccountTree">
+            <MudPaper Class="pa-4 mt-2 ml-8 mr-8 mb-4" Elevation="0">
+                <MudContainer>
+                    <MudCard Class="mb-6">
+                            <MudCardContent>
+                                <MudGrid>
+                                    <MudItem xs="12" sm="6" md="4">
+                                        <MudTextField @bind-Value="SettingsService.Settings.AzureTenant" Label="Azure tenant" Variant="Variant.Outlined"></MudTextField>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6" md="4">
+                                        <MudTextField @bind-Value="SettingsService.Settings.ClientId" Label="Entra client Id" Variant="Variant.Outlined"></MudTextField>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+                    <MudCard Class="mb-6">
+                        <MudCardContent>
+                            <MudTextField @bind-Value="newEnvironmentId" Label="Add environment Id" />
+                            <MudButton Class="mt-6 mb-2" @onclick="AddEnvironmentId" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudTable Items="SettingsService.Settings.EnvironmentIds" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Environment ID</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context</MudTd>
+                            <MudTd>
+                                <MudButton @onclick="() => RemoveEnvironmentId(context)" Color="Color.Error">Remove</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudContainer>
+            </MudPaper>
+            <MudPaper Class="pa-2 ma-0" Elevation="0">
+                <MudContainer>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveChanges" IconColor="Color.Secondary" Size="Size.Large">Save</MudButton>
+                </MudContainer>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="App settings" Icon="@Icons.Material.Filled.Build">
+            <MudPaper Class="pa-4 mt-2 ml-8 mr-8 mb-4" Elevation="0">
+                <MudContainer>
+                    <MudCard>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField @bind-Value="TimerSeconds" Label="API cooldown (seconds)" Variant="Variant.Outlined"></MudTextField>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                </MudContainer>
+            </MudPaper>
+            <MudPaper Class="pa-2 mt-4" Elevation="0">
+                <MudContainer>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveChanges" IconColor="Color.Secondary" Size="Size.Large">Save</MudButton>
+                </MudContainer>
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+</MudPaper>
+
+
+

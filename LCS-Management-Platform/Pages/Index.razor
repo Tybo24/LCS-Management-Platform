@@ -1,0 +1,299 @@
+﻿@page "/"
+@using LCS_Management_Platform.Helpers
+@using LCS_Management_Platform.Models
+@using LCS_Management_Platform.Services
+@using LCS_Management_Platform.Services.Interfaces
+@using LCS_Management_Platform.Data
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@inject IAuthService AuthService
+@inject IEnvironmentDataService EnvironmentDataService
+@inject SettingsService SettingsService
+@inject IDialogService DialogService
+
+@if (!AppState.environmentData)
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraSmall">
+        <MudPaper Class="justify-center pa-6 mt-12">
+            <MudForm>
+                <MudItem xs="24" sm="14">
+                    <MudTextField T="string" Label="Username"
+                                  Required="true"
+                                  RequiredError="User name is required!"
+                                  OnlyValidateIfDirty="true"
+                                  Validation="@(new EmailAddressAttribute() {ErrorMessage = "The email address is invalid"})"
+                                  @ref="username" />
+                </MudItem>
+                <MudItem xs="24" sm="14">
+                    <MudTextField T="string" Label="Password"
+                                  Required="true"
+                                  InputType="InputType.Password"
+                                  RequiredError="Password is required!"
+                                  OnlyValidateIfDirty="true"
+                                  @ref="password" />
+                </MudItem>
+            </MudForm>
+            <MudContainer MaxWidth="MaxWidth.ExtraSmall">
+                <MudPaper Class="d-flex justify-center pa-6 mt-6" Elevation="0">
+                    <MudButton Disabled="@_processing" Variant="Variant.Filled" Color="Color.Primary" DropShadow="false" OnClick="@(() => SubmitUserAndGetData())">
+                        @if (_processing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Processing</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Submit</MudText>
+                        }
+                    </MudButton>
+                </MudPaper>
+            </MudContainer>
+        </MudPaper>
+    </MudContainer>
+
+
+}
+else if (AppState.environmentData)
+{
+    <MudPaper Class="pt-4 mt-4">
+
+        <MudContainer Class="pa-4" MaxWidth="MaxWidth.Large">
+            <MudPaper Class="pb-4 align-end d-flex " Elevation="0">
+                <MudButton Disabled="@AppState.timerActive" Variant="Variant.Filled" Color="Color.Primary" DropShadow="false" OnClick="@(() => SubmitUserAndRefreshData())">
+                    @if (AppState.timerActive)
+                    {
+                        <MudText Class="ms-2">Wait (@(AppState.timerCountdown / 1000)) seconds</MudText>
+                    }
+                    else if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Medium" Indeterminate="true" />
+
+                    }
+                    else
+                    {
+                        <MudText>Refresh</MudText>
+                    }
+                </MudButton>
+                <MudSpacer />
+                <MudSpacer />
+                <MudSpacer />
+                <MudSpacer />
+                <MudText Class="justify-content-end" Typo="Typo.caption" Align="Align.Right">Last updated: @AppState.envDataLastUpdate</MudText>
+
+            </MudPaper>
+            <MudTable Items="@Environments" Loading="@_processing" Filter="new Func<EnvDataList,bool>(FilterFunc1)" @bind-SelectedItem="selectedItem1">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">F&O Environments</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Environment</MudTh>
+                    <MudTh>Release version</MudTh>
+                    @* <MudTh>Environment Id</MudTh> *@
+                    <MudTh>Build version</MudTh>
+                    <MudTh>Platform version</MudTh>
+                    <MudTh>State</MudTh>
+                    <MudTh>Details</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Environment name">
+                        @if (!context.DataMissing)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.EnvironmentName 
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2" Class="d-flex align-left justify-left">
+                                @context.EnvironmentType
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2" Class="d-flex align-left justify-left">
+                                @context.EnvironmentId
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2" Class="d-flex align-left justify-left">
+                                @context.CurrentCustomisation
+                            </MudText>
+
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.EnvironmentName
+                                <MudTooltip Text="Data was missing in last API call, displaying old data.">
+                                    <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Warning" Size="Size.Small" />
+                                </MudTooltip>
+                            </MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Release version">
+                        @if (context.EnvironmentType == "Production")
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationReleaseName
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationReleaseName, AppState.envReleaseVersion) == 1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                    @context.CurrentApplicationReleaseName
+                                    <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" Color="Color.Success" Size="Size.Small" />
+                                </MudText>
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationReleaseName, AppState.envReleaseVersion) == -1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationReleaseName
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" Color="Color.Error" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationReleaseName, AppState.envReleaseVersion) == 0)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationReleaseName
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.Check" Color="Color.Info" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationReleaseName
+                            </MudText>
+                        }
+                    </MudTd>
+@*                     <MudTd DataLabel="Environment Id">
+                        <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                            @context.EnvironmentId
+                        </MudText>
+                    </MudTd> *@
+                    <MudTd DataLabel="Build version">
+                        @if (context.EnvironmentType == "Production")
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationBuildVersion
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationBuildVersion, AppState.envBuildVersion) == 1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationBuildVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" Color="Color.Success" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationBuildVersion, AppState.envBuildVersion) == -1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationBuildVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" Color="Color.Error" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentApplicationBuildVersion, AppState.envBuildVersion) == 0)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationBuildVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.Check" Color="Color.Info" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentApplicationBuildVersion
+                            </MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Platform version">
+                        @if (context.EnvironmentType == "Production")
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentPlatformVersion
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentPlatformVersion, AppState.envPlatformVersion) == 1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentPlatformVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" Color="Color.Success" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentPlatformVersion, AppState.envPlatformVersion) == -1)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentPlatformVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" Color="Color.Error" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else if (DataManipHelper.CompareVersionNumbers(context.CurrentPlatformVersion, AppState.envPlatformVersion) == 0)
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentPlatformVersion
+                                <MudIcon Class="ma-1" Icon="@Icons.Material.Filled.Check" Color="Color.Info" Size="Size.Small" />
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6" Class="d-flex align-left justify-left">
+                                @context.CurrentPlatformVersion
+                            </MudText>  
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="State">
+                        @if (context.DeploymentStatusDisplay == "Deployed")
+                        {
+                            <MudAlert Severity="Severity.Success"> @context.DeploymentStatusDisplay </MudAlert>
+                        }
+                        else if (context.DeploymentStatusDisplay == "Failed")
+                        {
+                            <MudAlert Severity="Severity.Error"> @context.DeploymentStatusDisplay </MudAlert>
+                        }
+                        else if (context.DeploymentStatusDisplay == "Servicing")
+                        {
+                            <MudAlert Severity="Severity.Info"> @context.DeploymentStatusDisplay </MudAlert>
+                        }
+                        else if (context.DeploymentStatusDisplay == "Pre-servicing")
+                        {
+                            <MudAlert Severity="Severity.Info"> @context.DeploymentStatusDisplay </MudAlert>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudButton Variant="Variant.Outlined" 
+                        Size="Size.Small" 
+                        OnClick="@(() => ShowBtnPress(context.EnvironmentId))">@((context.ShowDetails == true) ? "Hide" : "Show") Environment history
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <ChildRowContent>
+                    @if (context.ShowDetails)
+                    {
+                        <MudTr>
+                            <td colspan="8">
+                            <MudCard Elevation="0">
+                             <MudCardContent Class="pa-0">
+                            <MudTable Items="@context.EnvHistData" Context="HistoryContext" Breakpoint="Breakpoint.Sm">
+                                <HeaderContent>
+                                    <MudTh>Name</MudTh>
+                                    <MudTh>Type</MudTh>
+                                    <MudTh>Start date/time</MudTh>
+                                    <MudTh>End date/time</MudTh>
+                                    <MudTh>Status</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Name">@HistoryContext.Name</MudTd>
+                                    <MudTd DataLabel="Type">@HistoryContext.TypeDisplay</MudTd>
+                                    <MudTd DataLabel="Start date/time">@HistoryContext.StartDateTimeUTC</MudTd>
+                                    <MudTd DataLabel="End date/time">@HistoryContext.EndDateTimeUTC</MudTd>
+                                    <MudTd DataLabel="Status">@HistoryContext.Status</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                            </MudCardContent>
+                            </MudCard>
+                            </td>
+                        </MudTr>
+                    }
+                </ChildRowContent>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudContainer>
+    </MudPaper>
+}
