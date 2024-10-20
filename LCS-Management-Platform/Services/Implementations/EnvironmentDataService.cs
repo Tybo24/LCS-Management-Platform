@@ -42,18 +42,12 @@ namespace LCS_Management_Platform.Services.Implementations
                 }
                 else
                 {
-                    ExceptionHelper.ThrowCustomException(response);
+                    throw new Exception($"{response.ReasonPhrase}");
                 }
-            }
-            catch (HttpResponseException ex)
-            {
-                var retryMessage = ex.Response.Content.ReadAsStringAsync().Result;
-
-                throw new Exception($"API call failed: {retryMessage}");
             }
             catch (Exception ex)
             {
-                throw new Exception($"API call failed: {ex.Message}");
+                throw new Exception($"API call failed. {ex.Message}");
             }
 
             return null;
@@ -81,18 +75,12 @@ namespace LCS_Management_Platform.Services.Implementations
                 }
                 else
                 {
-                    ExceptionHelper.ThrowCustomException(response);
+                    throw new Exception($"{response.ReasonPhrase}");
                 }
-            }
-            catch (HttpResponseException ex)
-            {
-                var retryMessage = ex.Response.Content.ReadAsStringAsync().Result;
-
-                throw new Exception($"API call failed: {retryMessage}");
             }
             catch (Exception ex)
             {
-                throw new Exception($"API call failed: {ex.Message}");
+                throw new Exception($"API call failed. {ex.Message}");
             }
 
             return null;

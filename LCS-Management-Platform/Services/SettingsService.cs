@@ -31,7 +31,6 @@ namespace LCS_Management_Platform.Services
                     LCSAPI = "https://lcsapi.lcs.dynamics.com",
                     EnvironmentIds = new List<string>(),
                     APICooldown = 60000,
-                    AdminUser = "",
                     ClientId = "",
                     AzureTenant = "",
                     LCSScope = "https://lcsapi.lcs.dynamics.com//.default"

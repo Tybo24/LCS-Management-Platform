@@ -2,8 +2,6 @@
 {
     public interface IHttpClientWrapper
     {
-        //Task<HttpResponseMessage> PostAsync(string url, HttpContent content);
-
         Task<HttpResponseMessage> SendAsync(HttpRequestMessage request);
     }
 }

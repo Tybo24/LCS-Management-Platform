@@ -2,14 +2,9 @@ using LCS_Management_Platform.Data;
 using LCS_Management_Platform.Helpers;
 using LCS_Management_Platform.Models;
 using LCS_Management_Platform.Services;
-using LCS_Management_Platform.Services.Implementations;
 using LCS_Management_Platform.Shared;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Options;
 using MudBlazor;
-using Newtonsoft.Json;
-using System.Web.Http;
-using static MudBlazor.CategoryTypes;
 
 namespace LCS_Management_Platform.Pages
 {
@@ -52,6 +47,11 @@ namespace LCS_Management_Platform.Pages
                 if (DateTime.UtcNow > AppState.waitUntil)
                 {
                     var environmentIds = SettingsService.Settings.EnvironmentIds;
+
+                    if (environmentIds.Count == 0)
+                    {
+                        throw new Exception("No environments configured. Please set up environments on the configuration tab.");
+                    }
 
                     IList<EnvDataList> envData = new List<EnvDataList>();
                     List<string> missingData = new List<string>();
@@ -155,12 +155,11 @@ namespace LCS_Management_Platform.Pages
                 }
                 else
                 {
-                    await DialogServiceHelper.ShowErrorDialog("Too many requests!",
-                        "Too many requests have been made recently, please wait at least 5 minutes before trying again.");
+                    ExceptionHelper.HandleTooManyRequests();
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }
@@ -181,31 +180,16 @@ namespace LCS_Management_Platform.Pages
                 }
                 else
                 {
-                    var user = username.Value.ToLower();
+                    await RefreshAuthToken();
 
-                    if (user.Contains(SettingsService.Settings.AdminUser))
+                    if (AppState.tokenAcquired)
                     {
-                        await RefreshAuthToken();
+                        await GetEnvironmentData();
 
-                        if (AppState.tokenAcquired)
+                        if (!AppState.environmentData)
                         {
-                            await GetEnvironmentData();
-
-                            if (AppState.environmentData)
-                            {
-                                return;
-                            }
-                            else
-                            {
-                                await DialogServiceHelper.ShowErrorDialog("No data",
-                                    "Unable to retrieve data. Try again later.");
-                            }
+                            throw new Exception("No environment data could be retrieved.");
                         }
-                    }
-                    else
-                    {
-                        await DialogServiceHelper.ShowErrorDialog("Error",
-                            "Incorrect user or pass");
                     }
                 }
             }
@@ -230,9 +214,9 @@ namespace LCS_Management_Platform.Pages
 
                     StartCountdown();
 
-                    if (DateTime.UtcNow >= AppState.tokenExpiresAt)
+                    if (DateTime.UtcNow > AppState.tokenExpiresAt)
                     {
-                        // Dialog call makes auth call
+                        // Dialog call makes new auth call
                         var dialog = await DialogService.ShowAsync<CredentialsDialog>("Credentials expired");
                         var result = await dialog.Result;
 

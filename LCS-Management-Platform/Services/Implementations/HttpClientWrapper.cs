@@ -11,11 +11,6 @@ namespace LCS_Management_Platform.Services.Implementations
             _httpClient = httpClient;
         }
 
-        //public async Task<HttpResponseMessage> PostAsync(string url, HttpContent content)
-        //{
-        //    return await _httpClient.PostAsync(url, content);
-        //}
-
         public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
         {
             return await _httpClient.SendAsync(request);

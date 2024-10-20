@@ -4,6 +4,7 @@ using LCS_Management_Platform.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using System.Web.Http;
 
 namespace LCS_Management_Platform.Services.Implementations
 {
@@ -18,7 +19,7 @@ namespace LCS_Management_Platform.Services.Implementations
             _settingsService = settingsService;
         }
 
-        public async Task<bool> GetAuthTokenAsync(string username, string password)
+        public async Task<bool> GetAuthTokenAsync(string username, string password, bool throwError = true)
         {
             try
             {
@@ -53,20 +54,17 @@ namespace LCS_Management_Platform.Services.Implementations
 
                     return response.IsSuccessStatusCode;
                 }
-                else
+                else if (throwError)
                 {
-                    throw new HttpRequestException($"Authentication request failed with status code {response.StatusCode}");
+                    throw new Exception($"Authentication request failed. Reason phrase: {response.ReasonPhrase}");
                 }
             }
-            catch (HttpRequestException ex)
+            catch (Exception)
             {
-                return false;
+                throw;
             }
-            catch (Exception ex)
-            {
-                return false;
 
-            }
+            return false;
         }
 
         private async void StoreAuthToken(string responseContent)

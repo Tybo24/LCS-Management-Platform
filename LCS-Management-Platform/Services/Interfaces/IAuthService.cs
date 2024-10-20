@@ -4,6 +4,6 @@ namespace LCS_Management_Platform.Services.Interfaces
 {
     public interface IAuthService
     {
-        Task<bool> GetAuthTokenAsync(string username, string password);
+        Task<bool> GetAuthTokenAsync(string username, string password, bool throwError = true);
     }
 }

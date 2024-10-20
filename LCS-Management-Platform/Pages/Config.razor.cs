@@ -1,6 +1,3 @@
-using LCS_Management_Platform.Data;
-using Newtonsoft.Json;
-
 namespace LCS_Management_Platform.Pages
 {
     public partial class Config

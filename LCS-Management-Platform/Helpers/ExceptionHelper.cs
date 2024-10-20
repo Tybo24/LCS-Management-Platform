@@ -17,16 +17,6 @@ public static class ExceptionHelper
             AppState.waitUntil = DateTime.UtcNow.AddMinutes(5);
         }
 
-        throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.TooManyRequests)
-        {
-            Content = new StringContent($"Too Many Requests. \nTry again after {DateTimeHelper.BritishTime(AppState.waitUntil)} ")
-        });
-    }
-
-    public static void ThrowCustomException(HttpResponseMessage response)
-    {
-        var responseContent = response.Content.ReadAsStringAsync().Result;
-
-        throw new Exception($"Unknown exception. \n{response.ReasonPhrase.ToString()}: {responseContent}");
+        throw new Exception($"Too Many Requests. Try again after {DateTimeHelper.BritishTime(AppState.waitUntil)} ");
     }
 }
