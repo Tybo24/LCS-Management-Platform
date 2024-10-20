@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/LCS-Management-Platform/Settings.json
+/LCS-Management-Platform/Settings.json
+/LCS-Management-Platform/Settings.json
